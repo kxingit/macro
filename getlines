@@ -1,0 +1,2 @@
+#
+\ls -1 $1/*.0 | rev | awk -F / '{print$1}' | rev | sed 's/\.0$//g'

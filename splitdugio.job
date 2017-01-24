@@ -1,0 +1,37 @@
+#!/bin/bash
+#rj queue=teamlonestar localdisk=1 io=0 logdir=logs/10_splitdugio name=splitdugio mem=8000m cpus=* priority=100  schema=splitdugio.schema
+
+module add production processing FreeUSP Nemo prod
+
+. processing || exit 100
+
+{
+# count job time
+startTime=$(date +%s)
+
+inFile=$PWD/${inp}
+outVol=${PWD}/Peru_ALL_S2_SCDECON_velrep3100_dat3900_ElvSt.dugio
+line=${line}
+
+#line=FFID${fshot}-${lshot}_cable1_gun1
+shot=${fshot}-${lshot}[1]
+channel=${h2min}-${h2max}[${h2inc}]
+ 
+dugio read \
+    file=${inp}  \
+    line=${line} \
+    query=${header}:${shot} |
+    
+dugio write \
+        file=${out} \
+        subgrid=${header}:${shot} \
+        4thD=${header2}:${channel} \
+        line=${line} optimise_gathers || die "dugio write failed"
+
+# count job time
+endTime=$(date +%s)
+echo "$(basename $0): Total time = $((endTime-startTime)) seconds"
+printf  ""%dh:%dm:%ds"\n" $(((endTime-startTime)/3600)) $(((endTime-startTime)%3600/60)) $(((endTime-startTime)%60))
+
+} 2>&1 |
+dateout || exit 100

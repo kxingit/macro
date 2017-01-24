@@ -1,0 +1,8 @@
+input=$1
+echo "gut,tracr" > RY05-5264P1-142_cable7_gun2.csv
+dugio read file=$input query=* line=RY05-5264P1-142_cable7_gun2 |dugethw key=tracr,gut output=geom|sort -n |uniq |awk '{print $2","$1}' >> RY05-5264P1-142_cable7_gun2.csv
+echo "gut,tracr" > RY05-5568I4-170_cable5_gun2.csv
+dugio read file=$input query=* line=RY05-5568I4-170_cable5_gun2 |dugethw key=tracr,gut output=geom|sort -n |uniq |awk '{print $2","$1}' >> RY05-5568I4-170_cable5_gun2.csv
+echo "gut,tracr" > RY05-6272P1-015_cable3_gun1.csv
+dugio read file=$input query=* line=RY05-6272P1-015_cable3_gun1 |dugethw key=tracr,gut output=geom|sort -n |uniq |awk '{print $2","$1}' >> RY05-6272P1-015_cable3_gun1.csv
+

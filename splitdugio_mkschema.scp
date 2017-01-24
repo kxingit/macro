@@ -1,0 +1,48 @@
+#!/bin/bash
+
+echo " "
+echo " "
+echo " THIS SCRIPT SPLITS 2D DUGIO VOLUME INTO SMALL PARTS"
+echo " FOR THE GIVEN ;"
+echo " INPUT DUGIO FILE NAME"
+echo " SPLIT HEADER"
+echo " SPLIT HEADER MIN"
+echo " SPLIT HEADER MAX"
+echo " SPLIT HEADER SIZE"
+echo " "
+echo " "
+
+read -p " Enter Input File Name         : " inputfile
+read -p " Enter line name               : " linename 
+read -p " Enter split header            : " header
+read -p " Enter split header min                : " hmin
+read -p " Enter split header max                : " hmax
+read -p " Enter split header size       : " hsize
+read -p " Enter 4th header name         : " header2
+read -p " Enter 4th header min          : " h2min
+read -p " Enter 4th header max          : " h2max
+read -p " Enter 4th header inc          : " h2inc
+
+echo $inputfile > tmpname 
+outfile=`less tmpname | sed 's/.dugio//g'`
+echo " "
+echo " "
+i1=$hmin
+i2=1
+ppwd=$(pwd)
+rm -f splitdugio.schema tmpname
+while [[ $i1 -le $hmax ]]  
+do
+  range1=$i1
+  range2=`expr $range1 + $hsize - 1`
+  if [ $range2 -ge $hmax ]
+  then
+  range2=$hmax
+  else
+  range2=$range2
+  fi
+  echo "$i2 line=$linename header=$header header2=$header2 fshot=$range1 lshot=$range2 h2min=$h2min h2max=$h2max h2inc=$h2inc inp=${ppwd}/${inputfile} out=${ppwd}/${outfile}_${range1}_${range2}.dugio " >> splitdugio.schema
+  ((i1 = i1 + $hsize ))
+  ((i2 = i2 + 1 ))
+done 
+rjs ~/macro/splitdugio.job

@@ -1,0 +1,83 @@
+#!/bin/bash
+
+echo " "
+echo " "
+echo " THIS SCRIPT CREATES 2D MIGRATION SURVEY FILE"
+echo " AND DETERMINES THE VELOCITY EXTENSTION FOR A MIGRATION"
+echo " (CDPs will be expanded each side 1/2 of the maximum offset"
+echo "  by pushing the CDP values to be on the defined grid" 
+echo " "
+echo " USER MUST ENTER:"
+echo " INPUT DATA CMP RANGE"
+echo " INPUT DATA CMP SPACING"
+echo " INPUT DATA OFFSET RANGE"
+echo " suggested velocity grid is 100m"
+echo " "
+echo " NOTE: MAKE SURE TO ADD THE LINE_CMP_XY VALUES AT THE END OF THE SURVEY FILE CREATED HERE"
+echo " "
+read -p " Enter Min CMP	(#)		: " cmpmin
+read -p " Enter Max CMP	(#)		: " cmpmax
+read -p " Enter CMP Inc (#)		: " cmpinc
+read -p " Enter CMP spacing (m)		: " cmpspace
+read -p " Enter Min Off (m)		: " offmin
+read -p " Enter Max Off (m)		: " offmax
+read -p " Enter Off Inc (m)		: " offinc
+read -p " Enter Vel Grid (#)		: " velgrid
+read -p " Enter Line Name 		: " linename
+read -p " Enter Line Number (e.g. 0257)  : " linenum
+
+
+velgrid2=`expr $velgrid / 2`
+tmp1=`echo "$offmax + $offinc / 2" | bc -l`
+tmp2=`echo "$tmp1 / $cmpspace" | bc -l`
+tmp3=`echo "$cmpmin - $tmp2" | bc -l`
+tmp4=`echo "$cmpmax + $tmp2" | bc -l` 
+tmp5=`echo " $tmp3/$velgrid" | bc -l`
+tmp6=`echo " $tmp4/$velgrid" | bc -l`
+tmp7=`printf "%.0f\n" $tmp5`
+tmp8=`printf "%.0f\n" $tmp6`
+tmp9=`echo "$tmp7 - 1" | bc -l`
+tmp10=`echo "$tmp8 + 1" | bc -l`
+cmpmin2=`echo "$tmp9 * $velgrid" | bc -l`
+cmpmax2=`echo "$tmp10 * $velgrid" | bc -l`
+
+
+echo " "
+echo "INPUT RANGE CMP MIN AND MAX"
+echo "$cmpmin 	$cmpmax"
+echo " "
+echo "EXTRAPOLATED RANGE CMP MIN AND MAX"
+echo "$cmpmin2	$cmpmax2"
+echo " "
+
+rm -f output.survey
+echo "survey_type=2D" > output.survey
+echo " " >>  output.survey
+echo "4thD_name=offset" >> output.survey
+echo "4thD=offset:${offmin}-${offmax}[$offinc]" >> output.survey
+echo "subgrid_name=mig_vel" >> output.survey
+echo "subgrid_comment=\"migration velocity subgrid\"" >> output.survey
+echo "subgrid=cmp:${cmpmin2}-${cmpmax2}[$velgrid]" >> output.survey
+echo " " >>  output.survey
+echo "subgrid_name=mig_out_line$linenum" >> output.survey
+echo "subgrid_comment=\"migration output range\"" >> output.survey
+echo "subgrid=cmp:${cmpmin}-${cmpmax}[1]" >> output.survey 
+echo " " >>  output.survey
+echo "subgrid_name=raysource" >> output.survey
+echo "subgrid=cmp:${cmpmin2}-${cmpmax2}[$velgrid]" >> output.survey
+echo " " >>  output.survey
+echo "subgrid_name=raysub" >> output.survey
+echo "subgrid=cmp:${cmpmin2}-${cmpmax2}[$velgrid2]" >> output.survey
+echo " " >>  output.survey
+echo "line_name=$linename" >> output.survey
+echo "line=cmp:${cmpmin2}-${cmpmax2}" >> output.survey
+echo " " >>  output.survey
+
+echo " "
+echo " "
+cat output.survey
+echo " "
+echo " "
+echo "END OF SCRIPT NOW CHECK output.survey AND ADD LINE_CMP_XY VALUES TO THE END OF THE FILE"
+echo " "
+echo " "

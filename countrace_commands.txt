@@ -1,0 +1,309 @@
+
+
+cat EAST_KNOX_SRC_combine_nohead_reformat.txt |awk '{printf ("S      %20d %24s %14.1f %14.1f %8.1f\n", $1,$2,$3*0.1,$4*0.1,$5*0.1) }'
+
+segyread tape=Tape_01.sgy bfile=/dev/null hfile=/dev/null over=1 verbose=0 endian=0 trmin=1 trmax=10000 remap=swdep,gwdep,laga,lagb byte=189l,193l,197s,199s  | 
+duremap from=61l,65l to=61l/100,65l/100 | 
+dushw key=scalco a=1 | 
+dugethw key=fldr,tracf,trid,swdep,gwdep,laga,lagb output=geom > Tape_01_headers.txt
+
+
+./CountTraces.sh>ftraces
+
+cat ftraces|grep Traces |awk '{sum+=$2} END {print sum}'
+
+ll *.sgy | awk '$5=="3200"' | awk '{print $9}' | sed 's/_oldcdps.*//g' | awk '{print $1 " il="$1}'>IL2.schema
+
+cat static_to_move_to_finaldatum.txt|awk '{print $1","$2,($3*-7600)/200000}' > caYoGa_final_static.txt
+
+extract cdp-elevation from claritas dataset:
+segyread tape=scac4_no-off_with_cdpe.stack endian=1 bfile=/dev/null hfile=/dev/null remap=sut,gut,cdpt byte=221s,223s,225l | dugethw key=sut,gut,cdpt output=geom | sort -k1n -k2n | awk '{printf ("%6d %4d %8d \n",$1,$2,$3)}'>test.txt
+
+SU:    dushw key=offset,gdel,sdel,swdep,gwdep,selev,gelev a=0,0,0,0,0,0,0
+
+USP trace mix:  mixrec -w1 -m5
+USP: replace -min 2 -value 100000
+USP: replace -max 800000 -value 100000
+cat combine_rss1.sfl|awk '{print "./tmp/" $1}' >combine_rss1.sfl2
+
+**to print different lines into one line
+sq
+
+***
+ls -l *_cdpindextfdrand_nmo2rmv_rss1_fgeom.cdps|awk '{print "./tmp/" $9}'>combine_fgeom_rss1.sfl
+
+***to update the status of different jobID but with same job name dp_xl_lnr3000
+squeue -u guopingx -n dp_xl_lnr3000 -o %F -h|sort -u|xargs -i{} scontrol update job={} priority=200
+
+cat FFID.schema|awk '{print $1 " " $2 " " $3 " jnum="$1}'>FFID2.schema
+
+
+SURVEY_PT1 IL_CL_X_Y=1001/1,311311.97/511729.41                             
+SURVEY_PT2_IL_CL_X_Y=1001/377,352621.5/509686.69                            
+SURVEY_PT3_IL_CL_X_Y=1306/377,354278.5/543195.72                      
+SURVEY_PT4_IL_CL_X_Y=1306/1,312968.97/545238.44  
+
+dugio read file=../../test/000scratch/M010_lnrfilt_tfd31_21trc_scac4_no-off_mrg_BIN.dugio query=* tile_cache=120000 | susort cdp offset >scac4_cdpoffset.su
+cat scac4_cdpoffset.su|dugio write optimise_gathers file=scac4_cdpoffset.dugio subgrid=IL:1001-1305[1]+CL:1-377[1] tile_cache=6054 bin_count=150
+
+dugio read file=SCAC4Raw_5060_PreSTM.dugio query=* tile_cache=12560|dugio write file=SCAC4Raw_5060_PreSTM_bincount.dugio subgrid=IL:1001-1305[1]+CL:1-377[1] 4thD=offset:1-241 tile_cache=6054
+
+dugio read file=SCAC4Raw_5060_PreSTM.dugio query="il:1001-1306[1]+cl:1-377[1]">SCAC4Raw_5060_PreSTM.su tile_cache=12560
+
+Convert dugio to su
+dugio read file=041_COV_LNR50000.dugio  query="il:1000-1358[1]+cl:1000-1546[1]" > trimstat_in.su
+
+Store offset header -> offset -> cdpt
+<IL1000CL1000-1010ForWendyTest.su duchw key1=offset outkey=cdpt | sucommand key=ep command="sushw key=offset a=1 b=1" > IL1000CL1000-1010ForWendyTest_OUT.su
+
+Convert su to dugio
+cat $file | dugio write file=${file%.*}.dugio query=* tile_cache=12560 | dugio write file=trimstat_in_il1200t1220_bin_count_in_offset.dugio subgrid=IL:1200-1220[1]+CL:1000-1546[1] tile_cache=6054 bin_count=300
+
+Then I think you do either of the following depending on what you want. (my guess is you want the first one)
+
+Create offset volume
+dugio read file=trimstat_in_il1200t1220_offset.dugio/ query=* tile_cache=12560 | dugio write file=trimstat_in_il1200t1220_bin_count_in_offset.dugio subgrid=IL:1200-1220[1]+CL:1000-1546[1] 4thD=offset:1-241 tile_cache=6054
+
+Create bin volume
+dugio read file=trimstat_in_il1200t1220_offset.dugio/ query=* tile_cache=12560 | dugio write file=trimstat_in_il1200t1220_bin_count_in_offset.dugio subgrid=IL:1200-1220[1]+CL:1000-1546[1] tile_cache=6054 bin_count=300
+
+using script to set offset to 0
+dugio read file=/h1/apache/caYoGaPr_159/seiTimeProc/test/050_cdplnr_vmrg_offset3300/100sei/050_cdplnr_vmrg_offset3300.dugio query="il:1001-1305[1]+cl:1-377[1]"|sucommand key=cdp command="sushw key=offset a=0 b=0"|dugio write file=050_cdplnr_vmrg_offset3300_0.dugio subgrid=il:1001-1305[1]+cl:1-377[1] tile_cache=8000
+
+
+from 3D volume to shot/chan
+module add prod
+dugio read file=rawshots_Dgeom_TVNSref_merge_BIN.dugio query=il:* |duwind query=fldr:1-100[1] |
+dugio write file=FFID0001-0100_rawshots_DgeomTVNSref.dugio line= --- subgrid=----
+
+to get fold: module add prod
+1. set offset header:
+dugio read file=rawshots_Dgeom_TVNSref_merge_BIN.dugio query=il:* | dusetoff offsetkey=offset | dugio write file=rawshots_Dgeom_TVNSref_merge_BIN_off.dugio subgrid=IL:1001-1306[1]+CL:1-377[1] tile_cache=6054 bin_count=150
+
+dugio read file=your_3d_volume.dugio query=* | dugethw key=inline,crossline,cdpt output=geom > cdp_cdpt.txt 
+
+cat cdp_cdpt.txt | awk '{printf ("%4d %3d %3d\n", substr ($0,1,4),substr ($0,5,3),substr ($0,18,3))}' > 1
+
+
+12/07/2015 Turnpike
+write from 3d to 2d dugio:
+dugio read file=/h1/000scratch/seiTimeProc/test/030_feet_3d_to_2d_sxsy_gxgy/100sei/030_feet_3d_to_2d_sxsy_gxgy.dugio query=* tile_cache=12560 |duchw key1=cdpt outkey=cdpt | turnpike_3d_2d.su
+cat turnpike_3d_2d.su | dugio write optimise_gathers file=inl1780_cdpsort_2d_3.dugio line=inl1780_cable1_gun1 subgrid=cmp:5001-5850[1] bin_count=599
+
+rip header from seismic to test
+dugio read file=/h1/000scratch/Turnpike/Norge_Turnpike_sl1780_scd_mbna1_statics_cdps_2.dugio query=il:1780-1780[1]+cl:*|dugethw key=inline,crossline,sdepth,gwdep output=geom>list_of_finaldatum
+
+ segyread tape=/h1/000scratch/Turnpike/Norge_Turnpike_sl1780_scd_mbna1_statics_cdps.sgy endian=0 bfile=/dev/null hfile=/dev/null remap=d2,sut,gut byte=225f,189l,193l| sugethw key=sut,gut,d2 output=geom | sort -k2n > il_cl_flt_final_sort.txt 
+
+ls -d *|awk '{print "du -sh "$1}'
+
+ls -d *|awk '{print "du -sh "$1}'>test.sh
+chmod +x test.sh
+./test.sh >dirsizelist.txt
+
+ls -d *|awk '{print "du -sh "$1}'>test000.sh
+chmod +x test000.sh
+./test000.sh >dirsizelist000.txt
+
+cat hei3d_2014_fltcdp_statics.txt|awk '{print $2*100","int($1/10000)","$1-int($1/10000)*10000}'>hei3d_2014_fltcdp_statics_r.txt
+
+cat tmp1 | awk '{printf("%14.5f %11.5f \n"), $1*0.3048, $2}' > 111
+
+
+
+
+dugio2 read file=/h1/denbury/heidMisDI_001/seiTimeProc/test/2014_015_5dinterp_meter_flatdatum_basegeom_stp1/100sei/2014_015_5dinterp_meter_flatdatum_basegeom_stp1.dugio query=* tile_cache=100000|dugs grdsuxy2ilcl survey=/h1/denbury/heidMisDI_001/170survey/1998_survey_geomFinalRef_m_extend.survey|dugio write optimise_gathers file=/h1/denbury/heidMisDI_001/seiTimeProc/test/000scratch/2014_015_5dinterp_meter_flatdatum_basegeom_stp2.dugio subgrid="il:1-200[1]+cl:1-400[1]" tile_size=10 tile_cache=12000 bin_count=1000
+
+
+read just the EBCDIC headers from segy and save it to tets.txt
+******************************************
+segyread tape=test_hdr.sgy hfile=test.txt trmax=0 >testheaderread
+
+
+
+reformat a long line into 80-byte per line, 2 ways:
+****************************************************************************
+1:    cat test.txt|awk -v WIDTH=80 '{while (length>WIDTH) {print substr($0,1,WIDTH);$0=substr($0,WIDTH+1);}print;}'
+2:    fold -s -w 80 test.txt
+
+
+
+GNUPLOT
+--------------------------------------gnuplot-----------------------------------------------------------------------
+>gnuplot
+>plot 'SRC_reformat_combine.sp1' u 2:3
+>f(x) = 0<=x && x<1 ? sin(x) : 1<=x && x<2 ? 1/x : 1/0
+>plot f(x)
+
+
+
+for ((i=1;i<=15;i++)); do echo "mv 002_shots_list_comb_"$i".sfl 003_shots_list_comb_"$i".sfl"; done
+
+for ((i=1518;i<=2718;i++)); do echo "$i" "il="$i"-"$i;done
+for ((i=1518;i<=2718;i++)); do echo "$i" "il="$i"-"$i;done>2Dcdp_line_2.schema
+sq|grep JobHeldUser|cat |awk '{print $10}'|cut -b9-11|awk '{print "rm -rf *"$1+1517"*"}'
+
+sort -n xlshots.txt |uniq >xlshots_uniq.txt
+
+
+
+Limit number of job running:
+sudo scontrol update job=2824602 qos=maxjobs10
+
+
+sq|grep JobHeldUser|cat |awk '{print $10}'|cut -b9-11|awk '{print "rm -rf *"$1+1517"*"}'
+
+dugio read file=klauder.dugio query=* line=BR3d_cable1_gun1| suascii bare=1 > sss.asc
+
+
+DUMP HEADERS FROM SEGY
+segyread tape=BD_COG_FTI_01.sgy bfile=/dev/null hfile=/dev/null over=1 verbose=0 endian=0 trmin=1 remap=year,day,laga,lagb byte=197l,201l,205l,209l  | 
+dushw key=scalco a=1 | 
+dugethw key=fldr,tracf,trid,laga,year,lagb,day output=geom > BD_COG_FTI_01.txt
+
+
+VOLUME MERGE 
+----------------------------------------------------------------------------------------------
+Example 1:
+To merge volumes with only inlines or xlines, you need to have 1 whole volume for reference.
+src volume ---(reference whole volume)
+v_il volume   --inline only
+v_cl volume   --crossline only
+
+Using Volume Maths:
+if(isnan(src),nan,if(inline%100==0,v_il,if(crossline%100==0,v_cl,nan)))
+
+Example 2:
+v1 volume ---reference whole volume)
+v2 volume ---inlines (200-1100[100]
+v3 volume ---crossline 360,500
+v4 volume ---crossline 521,600
+
+Using Volume Maths:
+if(isnan(v1),nan,if(inline%100==0&&inline<=1100,v2,if(crossline==360||crossline==500,v3, if(crossline==521||crossline==600,v4,nan))))
+
+
+for ((i=25;i<=3075;i=i+50)); do echo "cat 011_scac2_foldplot.inputFoldPlot.ilcla|grep " $i " |cat|awk '{print "\$\1,\$\2,\$\4"}'>foldplot_$i.ilclt" ;done>prep_list.txt
+
+
+segyread tape=caYoGaPr_159_PreMigCMPGathers.sgy trmin=1 trmax=1000 bfile=/dev/null hfile=/dev/null over=1 verbose=0 endian=0 remap=ep,tracr,sut,gut,cdpt,year,sx,sy,gx,gy,day,hour,minute,sec byte=9l,13l,233f,237f,197f,229l,73f,77f,81f,85f,213l,217l,205l,209l|dugethw key=ep,tracr,day,hour,minute,sec,sx,sy,gx,gy,sut,gut,cdpt,year output=geom |sort -k1n -k2n>test.txt
+
+
+
+segyread tape=caYoGaPr_159_RawShotGathers.sgy bfile=/dev/null hfile=/dev/null over=1 verbose=0 endian=0 bfile=/dev/null hfile=/dev/null over=1 verbose=0 endian=0 remap=ep,tracr,tracf,sx,sy,gx,gy,day,hour,minute,sec,gelev,selev byte=9l,13l,13l,73f,77f,81f,85f,213l,217l,205l,209l,41l,45l |duchw outkey=cdpt,shotpoint key1=hour,day key2=sec,minute  b=10000,10000 c=1,1 |dushw key=cdp a=10010001|dugio write optimise_gathers file=RawShotGathers.dugio line=FFID1001-3550_cable1_gun1 subgrid=shot:1001-3550[1] 4thd=channel:1-1248[1]
+
+
+find . -mindepth 1 -maxdepth 1 -name '[0-9]*.segd' | while read -r l; do dusegd type=segd-land input_file=$l output_file=-; done | duwind query="trid:1" | dugethw key=fldr,tracf,ep,cdp,styp,stas,slen output=geom > allheaders_ffid_frn_sln_spn_rln_rpn_csn.txt
+
+find . -mindepth 1 -maxdepth 1 -name '[0-9]*.segd' | while read -r l; do dusegd type=segd-land input_file=$l output_file=-; done | suwind key=trid min=1 max=1 | dugethw key=fldr,tracf,ep,cdp,styp,stas,slen output=geom > all_headers.txt 
+
+find . -mindepth 1 -maxdepth 1 -name '[0-9]*.segd' | while read -r l; do dusegd type=segd-land input_file=$l output_file=-; done | duwind query="trid:1" | dugethw key=fldr,tracf,ep,cdp,styp,stas,slen output=geom > allheaders_ffid_frn_sln_spn_rln_rpn_csn.txt
+
+
+
+------------------------------------SEGD 2 SEGY AND DUGIO---------------------------------------------------
+#!/bin/bash
+
+module add dusegd
+
+msg() { echo "$*" >&2 ; }
+die() { msg "$*" ; exit 100 ; }
+
+set -o pipefail
+set -e
+
+rm -rf segd_shots.dugio
+
+find . -mindepth 1 -maxdepth 1 -name '[0-9]*.segd' |
+sort |
+while read -r l; do 
+    i=$((i+1))
+    dusegd type=segd-land input_file=$l output_file=- |
+    suwind key=trid min=1 max=1 |
+    sushw key=ep a=$i |
+    sushw key=tracr a=1 b=1  || die dusegd crashed
+done |
+tee >(dugethw key=fldr,tracf,ep,tracr,shotpoint,cdp,styp,stas,slen output=geom > allheaders_ffid_frn_ffid_channel_sln_spn_rln_rpn_csn.txt) |
+tee >(segyhdrs | segywrite tape=segd_shots.segy endian=0 ) |
+dubuffer |
+dugio write file=segd_shots.dugio line=test subgrid="shot:1-10000" 4thD="channel:1-8000" sample_size=32 tile_cache=8000 || die dugio write crashed
+
+----------------------------------END OF SEGD 2 SEGY AND DUGIO-----------------------------------------------
+
+dugio read file=/h2/apache/caYoGaPr_159/seiTimeProc/test/1000_raw_shot_header_fix/100sei/1000_raw_shot_header_fix.dugio query="*" line=FFID1001-1100_cable1_gun1|dugethw key=fldr,shotpoint,tracf,cdpt output=geom >dump1
+
+line=FFID1001-1100_cable1_gun1
+line=FFID1101-1200_cable1_gun1
+line=FFID1201-1300_cable1_gun1
+line=FFID1301-1400_cable1_gun1
+line=FFID1401-1500_cable1_gun1
+line=FFID1501-1600_cable1_gun1
+line=FFID1601-1700_cable1_gun1
+line=FFID1701-1800_cable1_gun1
+line=FFID1801-1900_cable1_gun1
+line=FFID1901-2000_cable1_gun1
+line=FFID2001-2100_cable1_gun1
+line=FFID2101-2200_cable1_gun1
+line=FFID2201-2300_cable1_gun1
+line=FFID2301-2400_cable1_gun1
+line=FFID2401-2500_cable1_gun1
+line=FFID2501-2600_cable1_gun1
+line=FFID2601-2700_cable1_gun1
+line=FFID2701-2800_cable1_gun1
+line=FFID2801-2900_cable1_gun1
+line=FFID2901-3000_cable1_gun1
+line=FFID3001-3100_cable1_gun1
+line=FFID3101-3200_cable1_gun1
+line=FFID3201-3300_cable1_gun1
+line=FFID3301-3400_cable1_gun1
+line=FFID3401-3500_cable1_gun1
+line=FFID3501-3600_cable1_gun1
+
+
+To create SPS file manually:
+
+cat prep_for_xps.txt|awk '{printf "X%14d %11d %9d %5d %5d %9d %9d %9d\n",$1,$2,$3,$4,$5*10+$6,$7,$8,$9}'>caYoGa.xps
+cat receiver_info.txt|awk '{printf "R%20d %33.1f %9.1f%6.1f\n", $3*10000+$5,$1,$4,$2}'>caYoGa.rps
+cat shot_info.txt|awk '{printf "S%20d %33.1f %9.1f%6.1f\n", $3*10000+$5,$1,$4,$2}'>caYoGa.sps
+
+
+
+segyread tape=/h1/000scratch/Howard_County_3D/417001_USB1/HOWARD_COUNTY_3D/SEGY/H012605326__4117001__HOWARD-COUNTY-3D__GH00849515__RFMT.segy  bfile=/dev/null hfile=/dev/null over=1 verbose=0 endian=0 remap=fldr,tracf,ep,tracr,year,day,minute,sec byte=9l,13l,9l,13l,229l,17l,225l,181l| duchw outkey=cdpt,shotpoint key1=minute,year key2=sec,day  b=10000,10000 c=1,1 |dugethw key=ep,tracr,shotpoint,cdpt output=geom >H012605326_segy_headerdump.txt
+
+segyread tape=/h1/000scratch/Howard_County_3D/417001_USB1/HOWARD_COUNTY_3D/SEGY/H012605327__4117001__HOWARD-COUNTY-3D__GH00849516__RFMT.segy  bfile=/dev/null hfile=/dev/null over=1 verbose=0 endian=0 remap=fldr,tracf,ep,tracr,year,day,minute,sec byte=9l,13l,9l,13l,229l,17l,225l,181l| duchw outkey=cdpt,shotpoint key1=minute,year key2=sec,day  b=10000,10000 c=1,1 |dugethw key=ep,tracr,shotpoint,cdpt output=geom >H012605327_segy_headerdump.txt
+
+segyread tape=/h1/000scratch/Howard_County_3D/417001_USB1/HOWARD_COUNTY_3D/SEGY/H012605328__4117001__HOWARD-COUNTY-3D__GH00849517__RFMT.segy  bfile=/dev/null hfile=/dev/null over=1 verbose=0 endian=0 remap=fldr,tracf,ep,tracr,year,day,minute,sec byte=9l,13l,9l,13l,229l,17l,225l,181l| duchw outkey=cdpt,shotpoint key1=minute,year key2=sec,day  b=10000,10000 c=1,1 |dugethw key=ep,tracr,shotpoint,cdpt output=geom >H012605328_segy_headerdump.txt
+
+
+segyread tape=/h1/000scratch/Howard_County_3D/417001_USB1/HOWARD_COUNTY_3D/SEGY/H012605330__4117001__HOWARD-COUNTY-3D__GH00849519__RFMT.segy bfile=/dev/null hfile=/dev/null over=1 verbose=0 endian=0 remap=fldr,tracf,ep,tracr,year,day,minute,sec byte=9l,13l,9l,13l,229l,17l,225l,181l| duchw outkey=cdpt,shotpoint key1=minute,year key2=sec,day  b=10000,10000 c=1,1 |dugethw key=ep,tracr,shotpoint,cdpt output=geom >H012605330_segy_headerdump.txt
+
+
+segyread tape=/h1/000scratch/Howard_County_3D/417001_USB1/HOWARD_COUNTY_3D/SEGY/H012605329__4117001__HOWARD-COUNTY-3D__GH00849518__RFMT.segy bfile=/dev/null hfile=/dev/null over=1 verbose=0 endian=0 remap=fldr,tracf,ep,tracr,year,day,minute,sec byte=9l,13l,9l,13l,229l,17l,225l,181l| duchw outkey=cdpt,shotpoint key1=minute,year key2=sec,day  b=10000,10000 c=1,1 |dugethw key=ep,tracr,shotpoint,cdpt output=geom >H012605329_segy_headerdump.txt
+
+
+
+from : Muhammad-Khairil Khairuddin
+segyread tape=/h1/000scratch/Howard_County_3D/417001_USB1/HOWARD_COUNTY_3D/SEGY/H012605330__4117001__HOWARD-COUNTY-3D__GH00849519__RFMT.segy endian=0 bfile=/dev/null hfile=/dev/null |
+duremap from=181L,185L,225L,229L,233S,237L to=181l,185l,225l,229l,233s,237l |
+duwind query=trid:6 |
+duchw key1=ep,sx,sy outkey=shotpoint,cdpx,cdpy |
+duchw key1=fldr,tracf,fldr outkey=ep,tracr,cdp |
+dugs dusurvey type=2D name=GH00849519_test_trid6 xy=cdp outtext=/h1/occidental/howCtyDIQI_008/loadedData/100_fieldData/000scratch/DUGIO/GH00849519_test_trid6.survey |
+dugio write optimise_gathers file=/h1/occidental/howCtyDIQI_008/loadedData/100_fieldData/000scratch/DUGIO/GH00849519_test_trid6.dugio line=GH00849519_test_trid6 subgrid=shot:4226-9886 4thD=channel:1-4 sample_size=32
+
+
+
+segyread tape=TTI.84350043.sgy file=/dev/null hfile=/dev/null over=1 verbose=0 endian=0 remap=fldr,tracf,trid,year,day,minute,sec byte=9l,13l,29s,229l,17l,225l,181l |duchw outkey=cdpt,shotpoint key1=minute,year key2=sec,day  b=10000,10000 c=1,1 |dugethw key=fldr,tracf,trid,year,day,minute,sec output=geom>headrdump_TTI_84350043.txt
+
+
+segyread tape=TTI.84350050.sgy file=/dev/null hfile=/dev/null over=1 verbose=0 endian=0 remap=fldr,tracf,trid,year,day,minute,sec byte=9l,13l,29s,229l,17l,225l,181l |duchw outkey=cdpt,shotpoint key1=minute,year key2=sec,day  b=10000,10000 c=1,1 |dugethw key=fldr,tracf,trid,year,day,minute,sec output=geom>headrdump_TTI_84350050.txt
+
+
+
+
+
+
+
+
+
+
