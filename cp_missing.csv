@@ -1,8 +1,0 @@
-cp ../Scalars/s11_section_scalars.txt s12_section_scalars.txt
-cp ../Scalars/s34_section_scalars.txt s35_section_scalars.txt
-cp ../Scalars/s52_section_scalars.txt s53_section_scalars.txt
-cp ../Scalars/s98_section_scalars.txt s99_section_scalars.txt
-cp ../Scalars/s134_section_scalars.txt s135_section_scalars.txt
-cp ../Scalars/s140_section_scalars.txt s141_section_scalars.txt
-cp ../Scalars/s143_section_scalars.txt s144_section_scalars.txt
-cp ../Scalars/s157_section_scalars.txt s158_section_scalars.txt
