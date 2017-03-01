@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 if (( $# != 2 )); then
     echo "Illegal number of parameters"
     echo "input: [File list] [Size of all files on each list (in gigabytes)]"
@@ -22,4 +22,4 @@ awk -v sizelimit=$((max_size_gigabytes*1024*1024)) -v outputfilename=${ts}_list 
 
 rm $temp_file_size
 echo "Done!"
-echo "Check the splitted lists!"
+echo "Check the split lists!"
