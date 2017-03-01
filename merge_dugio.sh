@@ -1,13 +1,19 @@
 #!/bin/bash
 if (( $# == 0 )); then
-    echo "input: [Input volumes (space seperated)], e.g. merge_dugio.sh input1.dugio input2.dugio..."
+    echo "merge_dugio.sh [Output volume name] [Input volume names (space seperated)]"
+	echo "e.g. merge_dugio.sh merged_output.dugio input1.dugio input2.dugio..."
     exit 1;
 fi
 
 ts="$(date +%s)"
-output="tmp_output"$ts".dugio"
+output=$1
+if [ -d $output ]; then
+	  echo "Output volume exits!"
+	  echo "Exiting..."
+	  exit 1;
+  fi
 mkdir $output
-for vol # in "$@"
+for vol # in "${@:2}"
 do
     find $vol -maxdepth 1 -type f| grep -v notes.txt | grep -v status.db | xargs ln -s -t $output
 done
@@ -23,4 +29,3 @@ bold=$(tput bold)
 normal=$(tput sgr0)
 echo ""
 echo "Merged dugio file is ${bold}"$output
-echo "${normal}Rename as you wish."
