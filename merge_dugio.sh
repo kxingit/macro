@@ -15,7 +15,13 @@ if [ -d $output ]; then
 mkdir $output
 for vol # in "${@:2}"
 do
-    find $vol -maxdepth 1 -type f| grep -v notes.txt | grep -v status.db | xargs ln -s -t $output
+	# Absolution paths
+	if [[ "${vol:0:1}" == / || "${vol:0:2}" == ~[/a-z] ]]
+		then
+    		find $vol -maxdepth 1 -type f| grep -v notes.txt | grep -v status.db | xargs ln -s -t $output
+	else # Relative paths
+    		find $PWD'/'$vol -maxdepth 1 -type f| grep -v notes.txt | grep -v status.db | xargs ln -s -t $output
+	fi
 done
 
 notes=$output"/notes.txt"
@@ -28,4 +34,4 @@ done
 bold=$(tput bold)
 normal=$(tput sgr0)
 echo ""
-echo "Merged dugio file is ${bold}"$output
+echo "Merged volume is ${bold}"$output"${normal}"
